@@ -1,5 +1,29 @@
 import minsearch
 import json
+from openai import OpenAI
+from dotenv import load_dotenv
+import os
+
+dotenv_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env')
+
+load_dotenv(dotenv_path)
+
+openai_api_key = os.getenv('OPENAI')
+
+client = OpenAI(api_key=openai_api_key)
+
+q = "The course is already started, can I still enroll?"
+
+
+response = client.chat.completions.create(
+    model = 'gpt-4o-mini',
+    messages = [{"role": "user",
+                 "content": q}],
+    
+)
+
+
+print(response)
 
 
 with open('documents.json', 'rt') as f_in:
@@ -19,7 +43,6 @@ index = minsearch.Index(
 
 # print(documents[0])
 
-q = "The course is already started, can I still enroll?"
 
 index.fit(documents)
 
