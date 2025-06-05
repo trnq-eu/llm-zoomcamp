@@ -15,15 +15,18 @@ client = OpenAI(api_key=openai_api_key)
 q = "The course is already started, can I still enroll?"
 
 
-response = client.chat.completions.create(
-    model = 'gpt-4o-mini',
-    messages = [{"role": "user",
-                 "content": q}],
+
+
+# response = client.chat.completions.create(
+#     model = 'gpt-4o-mini',
+#     messages = [{"role": "user",
+#                  "content": q}],
     
-)
+# )
 
 
-print(response)
+
+# print(response)
 
 
 with open('documents.json', 'rt') as f_in:
@@ -57,4 +60,29 @@ results = index.search(
 
 )
 
-print(results)
+prompt_template = """
+You're a course teaching assistant. 
+Answer the QUESTION based on the CONTEXT.
+If the CONTEXT doesn't contain the answer, output NONE.
+
+QUESTION: {question}
+CONTEXT: {context}
+
+""".strip()
+
+context = ""
+
+for doc in results:
+    context = context + f"section: {doc['section']}\nquestion: {doc['question']}\nanswer: {doc['text']}\n\n"
+
+
+prompt = prompt_template.format(question=q, context=context).strip()
+
+response = client.chat.completions.create(
+    model = 'gpt-4o-mini',
+    messages = [{"role": "user",
+                 "content": prompt}],
+    
+)
+
+print(response.choices[0].message.content)
