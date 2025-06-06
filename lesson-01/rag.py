@@ -86,3 +86,19 @@ response = client.chat.completions.create(
 )
 
 print(response.choices[0].message.content)
+
+def search(query):
+    boost = {'question': 3.0, 
+         'section': 0.5}
+    
+    results = index.search(
+    query = query,
+    filter_dict = {'course':'data-engineering-zoomcamp'},
+    boost_dict = boost,
+    num_results = 5
+    )
+
+    return results
+
+
+results = search('how do i run kafka?')
