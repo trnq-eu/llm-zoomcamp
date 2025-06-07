@@ -60,32 +60,18 @@ results = index.search(
 
 )
 
-prompt_template = """
-You're a course teaching assistant. 
-Answer the QUESTION based on the CONTEXT.
-If the CONTEXT doesn't contain the answer, output NONE.
-
-QUESTION: {question}
-CONTEXT: {context}
-
-""".strip()
-
-context = ""
-
-for doc in results:
-    context = context + f"section: {doc['section']}\nquestion: {doc['question']}\nanswer: {doc['text']}\n\n"
 
 
-prompt = prompt_template.format(question=q, context=context).strip()
 
-response = client.chat.completions.create(
-    model = 'gpt-4o-mini',
-    messages = [{"role": "user",
-                 "content": prompt}],
+
+# response = client.chat.completions.create(
+#     model = 'gpt-4o-mini',
+#     messages = [{"role": "user",
+#                  "content": prompt}],
     
-)
+# )
 
-print(response.choices[0].message.content)
+# print(response.choices[0].message.content)
 
 def search(query):
     boost = {'question': 3.0, 
@@ -102,3 +88,48 @@ def search(query):
 
 
 results = search('how do i run kafka?')
+
+
+def build_prompt(query, search_results):
+    prompt_template = """
+    You're a course teaching assistant. 
+    Answer the QUESTION based on the CONTEXT.
+    If the CONTEXT doesn't contain the answer, output NONE.
+
+    QUESTION: {question}
+    CONTEXT: {context}
+
+    """.strip()
+
+    context = ""
+
+    for doc in search_results:
+        context = context + f"section: {doc['section']}\nquestion: {doc['question']}\nanswer: {doc['text']}\n\n"
+
+    prompt = prompt_template.format(question=query, context=context).strip()
+
+    return prompt
+
+
+def llm(prompt):
+    response = client.chat.completions.create(
+        model = 'gpt-4o-mini',
+        messages = [{"role": "user",
+                     "content": prompt}],
+
+    )
+
+    return response.choices[0].message.content
+
+
+
+query = 'how do I run kafka?'
+
+def rag(query):
+    search_results = search(query)
+    prompt = build_prompt(query, search_results)
+    answer = llm(prompt)
+    return answer
+
+print(rag("what's the course about?"))
+
