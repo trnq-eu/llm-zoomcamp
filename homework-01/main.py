@@ -1,6 +1,11 @@
 import requests
 from elasticsearch import Elasticsearch
 from tqdm import tqdm
+from openai import OpenAI
+from dotenv import load_dotenv
+import os
+import json
+import tiktoken
 
 
 # retrieve documents
@@ -47,7 +52,7 @@ es_client = Elasticsearch('http://localhost:9200')
 # for doc in tqdm(documents):
 #      es_client.index(index=index_name, document=doc)
 
-q = "How do copy a file to a Docker container?"
+q = "How do I execute a command in a running docker container?"
 
 def elastic_search(query):
 
@@ -83,10 +88,57 @@ def elastic_search(query):
 
     return result_docs
 
-# print(elastic_search(q)[0:3])
 
 def build_prompt(query, search_results):
     context_template = """
     Q: {question}
     A: {text}
     """.strip()
+
+    context_entries = []
+    for result in search_results:
+        context_entry = context_template.format(question=result['document']['question'], text=result['document']['text'])
+        context_entries.append(context_entry)
+
+    context = "\n\n".join(context_entries)
+    return context
+
+prompt_template = """
+You're a course teaching assistant. Answer the QUESTION based on the CONTEXT from the FAQ database.
+Use only the facts from the CONTEXT when answering the QUESTION.
+
+QUESTION: {question}
+
+CONTEXT:
+{context}
+""".strip()
+
+
+search_result = elastic_search(q)
+
+llm_context = build_prompt(q, search_result)
+final_prompt = prompt_template.format(question=q, context=llm_context)
+
+dotenv_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env')
+
+load_dotenv(dotenv_path)
+
+openai_api_key = os.getenv('OPENAI')
+
+client = OpenAI(api_key=openai_api_key)
+
+def llm(prompt):
+    response = client.chat.completions.create(
+        model = 'gpt-4o',
+        messages = [{"role": "user",
+                     "content": prompt}],
+
+    )
+
+    return response.choices[0].message.content
+
+encoding = tiktoken.encoding_for_model("gpt-4o")
+
+prompt_tokens = encoding.encode(final_prompt)
+num_prompt_tokens = len(prompt_tokens)
+print(f"The prompt has {num_prompt_tokens} tokens.")
