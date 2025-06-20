@@ -1,0 +1,11 @@
+# install quadrant
+
+docker pull qdrant/qdrant
+
+docker run -p 6333:6333 -p 6334:6334 \
+   -v "$(pwd)/qdrant_storage:/qdrant/storage:z" \
+   qdrant/qdrant
+
+uv add "qdrant-client[fastembed]>=1.14.2"
+
+http://localhost:6333/dashboard#/collections
