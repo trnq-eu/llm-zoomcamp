@@ -11,3 +11,11 @@
 ## Question 3
 
 **Answer**: 0.82
+
+## Question 4
+
+**Answer**: 
+0.85
+
+Hit rate: 0.9300
+MRR: 0.8512
